@@ -1,1 +1,1 @@
-# elastic-insight
+# Elasticsearch Plugin for CDAP
