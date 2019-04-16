@@ -1,0 +1,16 @@
+grant {
+  // needed to generate runtime classes
+  permission java.lang.RuntimePermission "createClassLoader";
+
+  // needed to find the classloader to load whitelisted classes from
+  permission java.lang.RuntimePermission "getClassLoader";
+  
+  // needed to access CDAP instance
+  permission java.net.SocketPermission "*", "connect,resolve";
+  
+  // needed for serialization   
+  permission java.lang.reflect.ReflectPermission "suppressAccessChecks";   
+
+  permission java.lang.RuntimePermission "accessDeclaredMembers";
+     
+};
