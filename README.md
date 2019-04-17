@@ -6,7 +6,7 @@ It provides developers with data and application abstractions to accelerate appl
 
 CDAP runs on Apache Hadoop distributions such as Cloudera Enterprise Data Hub, the Hortonworks Data Platform, or the MapR Distribution. It also supports all the major public clouds such as AWS, Microsoft Azure and Google Cloud Platform.
 
-**Elastic Insight** depends on a streamlined [CDAP-Client](https://github.com/skrusche63/elastic-client) that was built to work with Elasticsearch plugin environment (nested and unneeded libraries are removed). Contributions were made to following CDAP REST APIs:
+**Elastic Insight** depends on a streamlined [CDAP-Client](https://github.com/predictiveworks/elastic-client) that was built to work with Elasticsearch plugin environment (nested and unneeded libraries are removed). Contributions were made to following CDAP REST APIs:
 
 * Application
 * Dataset
@@ -25,7 +25,7 @@ Threat Hunting e.g. based on Windows Event Logs (and of course other data source
 
 **Elastic Insight** connects these applications to the ELK stack. Applications can be started or stopped, monitored and results can be explored, fully under control from within Elasticsearch. 
 
-![alt Basic Threat Hunting with CDAP](https://github.com/skrusche63/elastic-insight/blob/master/images/threat-hunting.svg)
+![alt Basic Threat Hunting with CDAP](https://github.com/predictiveworks/elastic-insight/blob/master/images/threat-hunting.svg)
 
 Exploring suspicious activities in Windows Event Logs is just an example. One may think of other data sources or other use cases such as DGA botnet prediction or malware analysis. The technical setup is always the same and **Elastic Insight** is the missing link to open the door into a new world.
 
@@ -33,7 +33,7 @@ Exploring suspicious activities in Windows Event Logs is just an example. One ma
 
 **Elastic Insight** provides a common connector to [CDAP](https://cdap.io) and this platform is not restricted to Cyber Defense. Suppose purchase transactions from [Shopify](https://shopify.com) have to be analyzed to identify cross-selling opportunities, then CDAP can be used to connect to Shopify to ingest transaction data, perform market basket analysis and persist the analytic findings in Elasticsearch again.
 
-![alt Customer Science with CDAP](https://github.com/skrusche63/elastic-insight/blob/master/images/customer-science.svg)
+![alt Customer Science with CDAP](https://github.com/predictiveworks/elastic-insight/blob/master/images/customer-science.svg)
 
 And of course, this is just another example. Whether one needs to implement customer segmentation, dynamic pricing, product recommendations and other use cases, it always the same technical setup.  
 
