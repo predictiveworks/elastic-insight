@@ -28,3 +28,13 @@ Threat Hunting e.g. based on Windows Event Logs (and of course other data source
 ![alt Basic Threat Hunting with CDAP](https://github.com/skrusche63/elastic-insight/blob/master/images/threat-hunting.svg)
 
 Exploring suspicious activities in Windows Event Logs is just an example. One may think of other data sources or other use cases such as DGA botnet prediction or malware analysis. The technical setup is always the same and **Elastic Insight** is the missing link to open the door into a new world.
+
+## Customer Science
+
+**Elastic Insight** provides a common connector to [CDAP](https://cdap.io) and this platform is not restricted to Cyber Defense. Suppose purchase transactions from [Shopify](https://shopify.com) have to be analyzed to identify cross-selling opportunities, then CDAP can be used to connect to Shopify to ingest transaction data, perform market basket analysis and persist the analytic findings in Elasticsearch again.
+
+![alt Customer Science with CDAP](https://github.com/skrusche63/elastic-insight/blob/master/images/customer-science.svg)
+
+And of course, this is just another example. Whether one needs to implement customer segmentation, dynamic pricing, product recommendations and other use cases, it always the same technical setup.  
+
+
