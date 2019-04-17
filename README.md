@@ -1,4 +1,4 @@
-# ![alt logo]https://github.com/skrusche63/cdap-client/blob/master/images/elastic-insight.svg)Elasticsearch Plugin for CDAP
+# ![alt logo](https://github.com/skrusche63/cdap-client/blob/master/images/elastic-insight.svg) Elasticsearch Plugin for CDAP
 
 CDAP is an open source framework for building data analytic applications.
 
