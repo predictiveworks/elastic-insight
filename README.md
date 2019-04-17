@@ -1,4 +1,6 @@
-<img src="https://github.com/skrusche63/elastic-insight/blob/master/images/elastic-insight.svg" align="center" height="128px" width="128px"> 
+<p align="center">
+<img src="https://github.com/skrusche63/elastic-insight/blob/master/images/elastic-insight.svg" height="128px" width="128px"> 
+</p>
 
 # Elasticsearch Plugin for CDAP
 
