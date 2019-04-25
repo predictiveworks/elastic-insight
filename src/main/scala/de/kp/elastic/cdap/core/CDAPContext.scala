@@ -677,7 +677,7 @@ class CDAPContext(props:Properties) {
 	    
 	  })
 	  
-	  plugins.toList
+	  plugins.toList.distinct
 	  
 	}
 	
