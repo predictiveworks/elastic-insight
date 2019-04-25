@@ -15,6 +15,8 @@ package de.kp.elastic.cdap
  * the License.
  */
 
+import co.cask.cdap.client.proto.PluginPropertyField
+
 case class CDAPException(
   message:String,
   trace:Option[String] = None
@@ -24,13 +26,13 @@ case class CDAPProgram(
   progName:String,progDesc:String,progType:String  
 )
 
-case class CDAPApplication(
-  namespace:String,  
-  appName:String,
-  appDesc:String,
-  appVersion:String,
-  programs:List[CDAPProgram]
-)
+//case class CDAPApplication(
+//  namespace:String,  
+//  appName:String,
+//  appDesc:String,
+//  appVersion:String,
+//  programs:List[CDAPProgram]
+//)
 
 case class CDAPColumnDesc(
   colName:String,
@@ -71,6 +73,26 @@ case class CDAPDatasetSpec(
 case class CDAPMetrics(
   metrics:List[String],
   metricTags:Map[String,String]
+)
+
+case class CDAPPlugin(
+  /*
+   * Concatenated description of the parent artifact this plugin
+   * belongs too; the current version of CDAP (v5.1.1) distinguishes
+   * 'cdap-data-pipeline' and 'cdap-data-streams'
+   */
+  artifact:String,
+  /*
+   * The className is used as a unique identifier of a certain plugin,
+   * as plugins can be assigned to pipelines as well as to streams
+   */
+  className:String,
+  name:String,
+  `type`:String,
+  description:String,
+  endpoints:List[String],
+  configFieldName:String,
+  properties:Map[String,PluginPropertyField]
 )
 
 case class CDAPQueryResult(
@@ -198,7 +220,7 @@ case class StopReq(
   progType:String
 ) 
 
-case class AppsRsp(apps:List[CDAPApplication])
+//case class AppsRsp(apps:List[CDAPApplication])
 
 case class ExistsRsp(exists:Boolean)
 

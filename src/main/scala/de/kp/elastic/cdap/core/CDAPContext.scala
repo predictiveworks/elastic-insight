@@ -622,7 +622,7 @@ class CDAPContext(props:Properties) {
 	 * This request retrieves the CDAP based machinery
 	 * that can be used to build plugins
 	 */   
-	def getPlugins(namespace:String) {
+	def getPlugins(namespace:String):List[CDAPPlugin] = {
 	  
 	  /* 
 	   * CDAP provides for the creation of custom plugins to extend the 
@@ -631,44 +631,54 @@ class CDAPContext(props:Properties) {
 	   */
 	  val artifacts = props.getProperty("artifacts").split(",")
 	  val version = props.getProperty("version")
-	  /*
-	   * STEP #1: Retrieve list of all plugin types that are available for
-	   * each of the system artifacts
-	   */
-	  artifacts.foreach(artifact => {
+
+	  val plugins = artifacts.flatMap(artifact => {
+	    
+	    val artifactNS = s"SYSTEM:${artifact}:${version}"
 	    
 	    val artifactID = getArtifactID(namespace,artifact,version)
+	    /*
+	     * STEP #1: Retrieve list of all plugin types that are available 
+	     * for each of the system artifacts
+    	   */
 	    val types = artifactClient.getPluginTypes(artifactID)
 	    
-	    types.foreach(pluginType => {
-	      
-	      val summaries = artifactClient.getPluginSummaries(artifactID, pluginType)
-	      summaries.foreach(summary => {
+	    types.flatMap(pluginType => {
+	      /*
+	       * STEP #2: Retrieve plugin summaries for each of the
+	       * available plugin types
+	       */
+	      artifactClient.getPluginSummaries(artifactID, pluginType).flatMap(summary => {
 	        
 	        val pluginName = summary.getName
 	        val pluginType = summary.getType
 	        /*
 	         * PluginInfo is more detailed that summaries
 	         */
-	        val pluginInfo = artifactClient.getPluginInfo(artifactID, pluginType, pluginName)
-	          println(pluginInfo)
+	        val infos = artifactClient.getPluginInfo(artifactID, pluginType, pluginName)
+	        infos.map(info => {
+	          
+	          CDAPPlugin(
+		          artifact        = artifactNS,
+	            className       = info.getClassName,
+	            name            = info.getName,
+	            `type`          = info.getType,
+	            description     = info.getDescription,
+	            endpoints       = info.getEndpoints.asScala.toList,
+	            configFieldName = info.getConfigFieldName,
+	            properties      = info.getProperties.asScala.toMap
+            )
+            
+	        })
 	        
 	      })
 	    
 	    })
 	    
-	    /*
-	     * For each of these types, we request artifact details from
-	     * the respective client
-	     */
-	    
 	  })
 	  
-	}
-	
-	private def getPluginInfo(namespace:String,pluginName:String) {
-//	  	public List<PluginInfo> getPluginInfo(ArtifactId artifactId, String pluginType, String pluginName)
-
+	  plugins.toList
+	  
 	}
 	
 	def getArtifactID(namespace:String, artifact:String, version:String):ArtifactId = {
@@ -874,7 +884,7 @@ object CDAPContext {
     val props = CDAPConf.getProps
 		val ctx = new CDAPContext(props)
     
-    ctx.getPlugins("default")
+    println(ctx.getPlugins("default"))
     
   }
 }

@@ -26,25 +26,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 
-import de.kp.elastic.action.AppAction;
-import de.kp.elastic.action.AppsAction;
-import de.kp.elastic.action.DatasetAction;
-import de.kp.elastic.action.DatasetsAction;
-import de.kp.elastic.action.ExistsAction;
-import de.kp.elastic.action.MetricQueryAction;
-import de.kp.elastic.action.MetricsAction;
-import de.kp.elastic.action.ProgRunAction;
-import de.kp.elastic.action.QueryAction;
-import de.kp.elastic.action.RegisterAction;
-import de.kp.elastic.action.StartAction;
-import de.kp.elastic.action.StatusAction;
-import de.kp.elastic.action.StopAction;
-import de.kp.elastic.action.SystemServiceAction;
-import de.kp.elastic.action.SystemServiceInstancesAction;
-import de.kp.elastic.action.SystemServiceStatusAction;
-import de.kp.elastic.action.SystemServicesAction;
-import de.kp.elastic.action.SystemServicesStatusAction;
-import de.kp.elastic.action.UpdateAction;
+import de.kp.elastic.action.*;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -137,6 +119,13 @@ public class CDAPPlugin extends Plugin implements ActionPlugin {
         		 * _cdap/dataset/metrics/query
         		 */
         		new MetricQueryAction(settings, restController),
+        		/**
+        		 * Retrieve registered plugins
+        		 * 
+        		 * _cdap/plugins
+        		 */
+        		new PluginAction(settings, restController),
+        		
         		/**
         		 * Retrieve all system services
         		 * 

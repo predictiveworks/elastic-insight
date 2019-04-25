@@ -175,6 +175,18 @@ class CDAPJob(props:Properties) {
   }
    
   /**
+   * Delegate plugin retrieval to CDAP context
+   */
+  def getPlugins(namespace:String):List[CDAPPlugin] = {
+    ctx.getPlugins(namespace)
+  }
+  
+  def getPluginsAsJson(namespace:String):String = {
+    val result = getPlugins(namespace)
+    mapper.writeValueAsString(result)
+  }
+  
+  /**
    * Delegate system service retrieval to CDAP context
    */
   def getSystemServices:List[CDAPSystemServiceMeta] = {
