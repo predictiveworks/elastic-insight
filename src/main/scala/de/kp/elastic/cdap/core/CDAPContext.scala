@@ -161,20 +161,10 @@ class CDAPContext(props:Properties) {
    * application of a specific namespace that matches name
    * and version provided.
    */
-  def getApp(namespace:String, appName:String, appVersion:String):List[ApplicationRecord] = {
-    /*
-     * Retrieve all applications that refer to a certain namespace
-     * and filter that matches name and version
-     */
-    val apps = getApps(namespace=namespace)
-    apps.filter(app => {
-      
-      val name = app.getName
-      val version = app.getAppVersion
-      
-      (name == appName &&version == appVersion)
-      
-    })
+  def getApp(namespace:String, appName:String, appVersion:String):ApplicationDetail = {
+
+    val app = getAppID(namespace,appName,appVersion)
+    appClient.get(app)
     
   }
   

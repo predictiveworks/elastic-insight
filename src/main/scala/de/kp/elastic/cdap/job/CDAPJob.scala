@@ -49,7 +49,7 @@ class CDAPJob(props:Properties) {
   /**
    * Delegate retrieval of application to CDAP context  
    */
-  def getApp(namespace:String, appName:String, appVersion:String):List[ApplicationRecord] = {
+  def getApp(namespace:String, appName:String, appVersion:String):ApplicationDetail = {
     ctx.getApp(namespace, appName, appVersion)
   }
   
