@@ -62,6 +62,9 @@ object CDAPConf extends Serializable {
     
     }
     
+    props.setProperty("artifacts", conf.getString("artifacts"))
+    props.setProperty("version",   conf.getString("version"))
+    
     props
     
   }
@@ -87,6 +90,9 @@ object CDAPConf extends Serializable {
       props.setProperty("port", conf.getInt("router.ssl.port").toString)
     
     }
+    
+    props.setProperty("artifacts", conf.getString("artifacts"))
+    props.setProperty("version",   conf.getString("version"))
     
     props
 

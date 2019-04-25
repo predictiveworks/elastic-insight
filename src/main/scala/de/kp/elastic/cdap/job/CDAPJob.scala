@@ -19,6 +19,8 @@ import java.util.Properties
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
+import co.cask.cdap.client.proto._
+
 import de.kp.elastic.cdap._
 import de.kp.elastic.cdap.core.CDAPContext
 /**
@@ -26,33 +28,16 @@ import de.kp.elastic.cdap.core.CDAPContext
  * both, a CDAP client service and Elasticsearch's plugin concept
  */
 class CDAPJob(props:Properties) {
-  /*
-   * Extract CDAP configuration and build CDAP context
-   * either secure or non-secure
-   */
-  private val host = props.getProperty("host")
-  private val port = props.getProperty("port").toInt
-  
-  private val sslEnabled = props.getProperty("sslEnabled")
-  
-  private val alias = props.getProperty("alias")
-  private val password = props.getProperty("password")
   
   private val mapper = new ObjectMapper()
   mapper.registerModule(DefaultScalaModule)
    
-  private val ctx = if (sslEnabled == "yes")
-    new CDAPContext(
-        host=host, port=port, sslEnabled=true, alias=Option(alias), password=Option(password))
-    
-  else 
-    new CDAPContext(
-        host=host, port=port, sslEnabled=false, alias=None, password=None)
+  private val ctx = new CDAPContext(props)
 
   /**
    * Delegate retrieval of applications to CDAP context
    */
-  def getApps(namespace:String):List[CDAPApplication] = {
+  def getApps(namespace:String):List[ApplicationRecord] = {
     ctx.getApps(namespace)
   }
   
@@ -64,7 +49,7 @@ class CDAPJob(props:Properties) {
   /**
    * Delegate retrieval of application to CDAP context  
    */
-  def getApp(namespace:String, appName:String, appVersion:String):List[CDAPApplication] = {
+  def getApp(namespace:String, appName:String, appVersion:String):List[ApplicationRecord] = {
     ctx.getApp(namespace, appName, appVersion)
   }
   

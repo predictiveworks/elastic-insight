@@ -39,9 +39,8 @@ public class ProgRunResult implements ToXContent {
 
 		builder.startObject();
 
-		builder.startArray("result");
+		builder.field("result");
 		builder.copyCurrentStructure(parser);
-		builder.endArray();
 
 		builder.endObject();
 

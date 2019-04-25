@@ -4,13 +4,13 @@ import java.util.Properties
 
 import co.cask.cdap.client._
 import co.cask.cdap.client.config._
+import co.cask.cdap.client.proto._
 
 import co.cask.cdap.security.authentication.client.basic._
-import co.cask.cdap.client.proto._
 import co.cask.cdap.proto.ProgramType
 import co.cask.cdap.proto.QueryResult
 import co.cask.cdap.proto.artifact.AppRequest
-import co.cask.cdap.proto.id.{ApplicationId,DatasetId,NamespaceId,ProgramId}
+import co.cask.cdap.proto.id.{ApplicationId,ArtifactId,DatasetId,NamespaceId,ProgramId}
 
 import com.google.gson.{Gson,JsonObject}
 
@@ -46,10 +46,36 @@ import scala.collection.mutable.ArrayBuffer
  *   
  */
 
-class CDAPContext(val host:String, val port:Int = 11015, val sslEnabled:Boolean = false, val alias:Option[String] = None, val password:Option[String] = None) {
+class CDAPContext(props:Properties) {
   
   private val USERNAME_PROP_NAME = "security.auth.client.username"
   private val PASSWORD_PROP_NAME = "security.auth.client.password"
+  /*
+   * Extract CDAP configuration and build CDAP context
+   * either secure or non-secure
+   */
+  private val host = props.getProperty("host")
+  private val port = props.getProperty("port").toInt
+  
+  private val sslEnabled = {
+    
+    val prop = props.getProperty("sslEnabled")
+    if (prop == "yes") true else false
+  
+  }
+  
+  private val alias = {
+    
+    val prop = props.getProperty("alias")
+    if (prop.isEmpty) None else Some(prop)
+    
+  }
+  private val password = {
+    
+    val prop = props.getProperty("password")
+    if (prop.isEmpty) None else Some(prop)
+    
+  }
   
   private val connConfig = new ConnectionConfig(host, port, sslEnabled)
 
@@ -89,6 +115,10 @@ class CDAPContext(val host:String, val port:Int = 11015, val sslEnabled:Boolean 
    */
   private val appClient = new ApplicationClient(clientConfig)
   /*
+   * Build artifact client to access CDAP artifact REST service
+   */
+  private val artifactClient = new ArtifactClient(clientConfig)
+  /*
    * Build dataset client to access CDAP dataset REST service
    */
   private val datasetClient = new DatasetClient(clientConfig)
@@ -119,42 +149,10 @@ class CDAPContext(val host:String, val port:Int = 11015, val sslEnabled:Boolean 
    * A public method to retrieve all applications that are assigned to 
    * a specific namespace
    */
-  def getApps(namespace:String = "default"):List[CDAPApplication] = {
+  def getApps(namespace:String = "default"):List[ApplicationRecord] = {
     
     val nsID = NamespaceId.fromIdParts(List(namespace))
-    val apps = appClient.list(nsID)
-    
-    // TODO dataset, flow, service
-    
-    apps.map(app => {
-      
-      /* Extract metadata from registered applications
-       * 
-       * Note: 
-       * Logical pipelines are transformed (e.g. via CDAP Studio) into 
-       * physical pipelines that manifest itself as applications
-       *  
-       */
-      val appName = app.getName
-      val appDesc = app.getDescription
-      
-      val appType = app.getType
-      val appVersion = app.getAppVersion
-      /*
-       * Extract programs for each application
-       */
-      val programs = getPrograms(nsID,appName,appVersion).map(program => {
-        
-        val progName = program.getName
-        val progDesc = program.getDescription
-        val progType = program.getType.toString
-        
-        CDAPProgram(progName=progName,progDesc=progDesc,progType=progType)
-      })
-      
-      CDAPApplication(namespace=namespace, appName=appName, appDesc=appDesc, appVersion=appVersion, programs=programs)
-      
-    }).toList
+    appClient.list(nsID).asScala.toList
     
   }
   
@@ -163,13 +161,20 @@ class CDAPContext(val host:String, val port:Int = 11015, val sslEnabled:Boolean 
    * application of a specific namespace that matches name
    * and version provided.
    */
-  def getApp(namespace:String, appName:String, appVersion:String):List[CDAPApplication] = {
+  def getApp(namespace:String, appName:String, appVersion:String):List[ApplicationRecord] = {
     /*
      * Retrieve all applications that refer to a certain namespace
      * and filter that matches name and version
      */
     val apps = getApps(namespace=namespace)
-    apps.filter(app => (app.appName == appName && app.appVersion == appVersion))
+    apps.filter(app => {
+      
+      val name = app.getName
+      val version = app.getAppVersion
+      
+      (name == appName &&version == appVersion)
+      
+    })
     
   }
   
@@ -616,7 +621,70 @@ class CDAPContext(val host:String, val port:Int = 11015, val sslEnabled:Boolean 
 	def getSystemServiceInstances(serviceName:String):Int = {
 	  monitorClient.getSystemServiceInstances(serviceName)
 	}
+  
+  /********************************
+   * 
+   * PLUGIN SUPPORT
+   * 
+   *******************************/
+  
+	/**
+	 * This request retrieves the CDAP based machinery
+	 * that can be used to build plugins
+	 */   
+	def getPlugins(namespace:String) {
+	  
+	  /* 
+	   * CDAP provides for the creation of custom plugins to extend the 
+	   * existing 'cdap-data-pipeline' and 'cdap-data-streams' system 
+	   * artifacts.
+	   */
+	  val artifacts = props.getProperty("artifacts").split(",")
+	  val version = props.getProperty("version")
+	  /*
+	   * STEP #1: Retrieve list of all plugin types that are available for
+	   * each of the system artifacts
+	   */
+	  artifacts.foreach(artifact => {
+	    
+	    val artifactID = getArtifactID(namespace,artifact,version)
+	    val types = artifactClient.getPluginTypes(artifactID)
+	    
+	    types.foreach(pluginType => {
+	      
+	      val summaries = artifactClient.getPluginSummaries(artifactID, pluginType)
+	      summaries.foreach(summary => {
+	        
+	        val pluginName = summary.getName
+	        val pluginType = summary.getType
+	        /*
+	         * PluginInfo is more detailed that summaries
+	         */
+	        val pluginInfo = artifactClient.getPluginInfo(artifactID, pluginType, pluginName)
+	          println(pluginInfo)
+	        
+	      })
+	    
+	    })
+	    
+	    /*
+	     * For each of these types, we request artifact details from
+	     * the respective client
+	     */
+	    
+	  })
+	  
+	}
+	
+	private def getPluginInfo(namespace:String,pluginName:String) {
+//	  	public List<PluginInfo> getPluginInfo(ArtifactId artifactId, String pluginType, String pluginName)
 
+	}
+	
+	def getArtifactID(namespace:String, artifact:String, version:String):ArtifactId = {
+	  new ArtifactId(namespace,artifact,version)
+	}
+	
   /********************************
    * 
    * PROGRAM SUPPORT
@@ -809,15 +877,14 @@ class CDAPContext(val host:String, val port:Int = 11015, val sslEnabled:Boolean 
 
 object CDAPContext {
   
-  def main(args:Array[String]) {
+  def main(args:Array[String]) {    
+		
+    CDAPConf.init()
     
-    val client = new CDAPContext(host="localhost")
+    val props = CDAPConf.getProps
+		val ctx = new CDAPContext(props)
     
-    val tags = client.getMetricTags("default", null)
-    val metric = "system.dataset.store.reads"
-    
-    val result = client.queryMetric(tags, metric)    
-    println(result)
+    ctx.getPlugins("default")
     
   }
 }
