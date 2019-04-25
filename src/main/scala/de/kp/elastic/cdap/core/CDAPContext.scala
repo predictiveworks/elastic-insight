@@ -22,7 +22,7 @@ import scala.collection.JavaConverters._
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, HashMap}
 
 /*
  * https://docs.cask.co/cdap/6.0.0-SNAPSHOT/en/reference-manual/java-client-api.html#application-client
@@ -632,9 +632,13 @@ class CDAPContext(props:Properties) {
 	  val artifacts = props.getProperty("artifacts").split(",")
 	  val version = props.getProperty("version")
 
-	  val plugins = artifacts.flatMap(artifact => {
+	  val lookup = HashMap.empty[String,ArrayBuffer[String]]
+	  val plugins = ArrayBuffer.empty[CDAPPlugin]
+	  
+	  artifacts.foreach(artifact => {
 	    
 	    val artifactNS = s"SYSTEM:${artifact}:${version}"
+	    lookup += artifactNS -> ArrayBuffer.empty[String]
 	    
 	    val artifactID = getArtifactID(namespace,artifact,version)
 	    /*
@@ -643,12 +647,12 @@ class CDAPContext(props:Properties) {
     	   */
 	    val types = artifactClient.getPluginTypes(artifactID)
 	    
-	    types.flatMap(pluginType => {
+	    types.foreach(pluginType => {
 	      /*
 	       * STEP #2: Retrieve plugin summaries for each of the
 	       * available plugin types
 	       */
-	      artifactClient.getPluginSummaries(artifactID, pluginType).flatMap(summary => {
+	      artifactClient.getPluginSummaries(artifactID, pluginType).foreach(summary => {
 	        
 	        val pluginName = summary.getName
 	        val pluginType = summary.getType
@@ -656,19 +660,23 @@ class CDAPContext(props:Properties) {
 	         * PluginInfo is more detailed that summaries
 	         */
 	        val infos = artifactClient.getPluginInfo(artifactID, pluginType, pluginName)
-	        infos.map(info => {
+	        infos.foreach(info => {
 	          
-	          CDAPPlugin(
-		          artifact        = artifactNS,
-	            className       = info.getClassName,
-	            name            = info.getName,
-	            `type`          = info.getType,
-	            description     = info.getDescription,
-	            endpoints       = info.getEndpoints.asScala.toList,
-	            configFieldName = info.getConfigFieldName,
-	            properties      = info.getProperties.asScala.toMap
-            )
+	          if (lookup(artifactNS).contains(info.getClassName) == false) {
+	          
+	            lookup(artifactNS) += info.getClassName
+	            plugins += CDAPPlugin(
+		            artifact        = artifactNS,
+  	              className       = info.getClassName,
+	              name            = info.getName,
+	              `type`          = info.getType,
+	              description     = info.getDescription,
+	              endpoints       = info.getEndpoints.asScala.toList,
+	              configFieldName = info.getConfigFieldName,
+	              properties      = info.getProperties.asScala.toMap
+              )
             
+	          }
 	        })
 	        
 	      })
@@ -884,7 +892,10 @@ object CDAPContext {
     val props = CDAPConf.getProps
 		val ctx = new CDAPContext(props)
     
-    println(ctx.getPlugins("default"))
+    val plugins = ctx.getPlugins("default")
+    val filtered = plugins.filter(plugin => plugin.`type` == "batchsource")
+    
+    println(filtered.sortBy(plugin => plugin.className))
     
   }
 }
