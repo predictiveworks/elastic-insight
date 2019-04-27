@@ -44,9 +44,17 @@ public class CDAPPlugin extends Plugin implements ActionPlugin {
                                              Supplier<DiscoveryNodes> nodesInCluster) {
 
         return Arrays.asList(
-        		/** _cdap/apps **/
+        		/** 
+        		 * _cdap/apps 
+        		 */
         		new AppsAction(settings, restController),
-        		
+        		/**
+        		 * Retrieve a metric report of all runs (up to 100)
+        		 * of all applications of a certain namespace
+        		 * 
+        		 * _cdap/apps/report
+        		 */
+        		new AppsReportAction(settings, restController),
         		/** 
         		 * _cdap/app
         		 */

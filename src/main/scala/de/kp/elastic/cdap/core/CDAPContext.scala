@@ -860,6 +860,32 @@ class CDAPContext(props:Properties) {
    *******************************/
   
   /**
+   * This method retrieves aggregated run & metrics infos for all
+   * applications that refer to a certain namespace
+   */
+  def getAppsReport(namespace:String, startTime:Long = 0L, endTime:Long = 0L):List[CDAPAppReport] = {
+    /*
+     * STEP #1: Retrieve all apps that refer to a certain
+     * namespace
+     */
+    val apps = getApps(namespace)
+    apps.sortBy(app => app.getName)
+    /*
+     * STEP #2: Retrieve report for each application
+     */
+    apps.map(app => {
+      
+      val appName = app.getName
+      val appVersion = app.getAppVersion
+      
+      val report = getAppReport(namespace, appName, appVersion, startTime, endTime)
+      report
+      
+    }).toList
+
+  }
+  
+  /**
    * This method retrieves aggregated run & metric infos for the (single) program 
    * assigned to a certain application; the current metrics cover warnings and
    * errors that occurred during each run

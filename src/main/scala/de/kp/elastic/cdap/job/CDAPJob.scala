@@ -47,6 +47,18 @@ class CDAPJob(props:Properties) {
   }
   
   /**
+   * Delegates retrieval of application reports to CDAP context
+   */
+  def getAppsReport(namespace:String, startTime:Long = 0L, endTime:Long = 0L):List[CDAPAppReport] = {
+    ctx.getAppsReport(namespace, startTime, endTime)
+  }
+
+  def getAppsReportAsJson(namespace:String, startTime:Long = 0L, endTime:Long = 0L):String = {
+    val reports = ctx.getAppsReport(namespace, startTime, endTime)
+    mapper.writeValueAsString(reports)
+  }
+  
+  /**
    * Delegate retrieval of application to CDAP context  
    */
   def getApp(namespace:String, appName:String, appVersion:String):ApplicationDetail = {
