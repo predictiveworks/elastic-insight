@@ -36,7 +36,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
 
-import de.kp.elastic.ProgRunResult;
+import de.kp.elastic.JsonResult;
 import de.kp.elastic.ProgRunRequest;
 import de.kp.elastic.cdap.CDAPConf;
 import de.kp.elastic.cdap.job.CDAPJob;
@@ -84,7 +84,7 @@ public class ProgRunAction extends BaseRestHandler {
 		return channel -> {
 			try {
 
-				ProgRunResult response = doRequest(request);
+				JsonResult response = doRequest(request);
 
 				XContentBuilder builder = channel.newBuilder();
 				response.toXContent(builder, request);
@@ -97,7 +97,7 @@ public class ProgRunAction extends BaseRestHandler {
 		};
 	}
 
-	private ProgRunResult doRequest(RestRequest request) throws Exception {
+	private JsonResult doRequest(RestRequest request) throws Exception {
 
 		if (request.hasContentOrSourceParam()) {
 
@@ -125,7 +125,7 @@ public class ProgRunAction extends BaseRestHandler {
 
 			});
 
-			ProgRunResult result = new ProgRunResult(json);
+			JsonResult result = new JsonResult(json);
 			return result;
 
 		} else

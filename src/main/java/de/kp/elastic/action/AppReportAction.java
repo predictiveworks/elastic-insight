@@ -29,26 +29,28 @@ import java.util.stream.Collectors;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
 
+import de.kp.elastic.AppReportRequest;
 import de.kp.elastic.JsonResult;
 import de.kp.elastic.cdap.CDAPConf;
 import de.kp.elastic.cdap.job.CDAPJob;
 
-public class SystemServicesAction extends BaseRestHandler {
+public class AppReportAction extends BaseRestHandler {
 
-	private String ACTION_NAME = "SystemServicesAction";
+	private String ACTION_NAME = "AppReportAction";
 	private String CONFIG_PATH = "/application.conf";
 
 	private CDAPJob job;
 
-	public SystemServicesAction(Settings settings, RestController controller) {
+	public AppReportAction(Settings settings, RestController controller) {
 		super(settings);
-		controller.registerHandler(POST, "/_cdap/system/services", this);
+		controller.registerHandler(POST, "/_cdap/app/report", this);
 		/*
 		 * A privileged access to the application configuration file that contains the
 		 * settings for CDAP connection and authorized user
@@ -99,8 +101,19 @@ public class SystemServicesAction extends BaseRestHandler {
 
 		if (request.hasContentOrSourceParam()) {
 
+			XContentParser parser = request.contentOrSourceParamParser();
+			AppReportRequest req = AppReportRequest.parseRequest(parser);
+			/*
+			 * Extract request parameters and delegate execution to CDAPJob
+			 */
+			String namespace = req.getNamespace();
+			String appName = req.getAppName();
+			String appVersion = req.getAppVersion();
+			Long startTime = req.getStartTime();
+			Long endTime = req.getEndTime();
+			
 			String json = AccessController.doPrivileged((PrivilegedAction<String>) () -> {
-				return job.getSystemServicesAsJson();		
+				return job.getAppReportAsJson(namespace, appName, appVersion, startTime, endTime);
 
 			});
 

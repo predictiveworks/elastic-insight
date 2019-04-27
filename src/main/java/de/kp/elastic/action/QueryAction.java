@@ -35,7 +35,7 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
 
 import de.kp.elastic.QueryRequest;
-import de.kp.elastic.QueryResult;
+import de.kp.elastic.JsonResult;
 import de.kp.elastic.cdap.CDAPConf;
 import de.kp.elastic.cdap.job.CDAPJob;
 
@@ -84,7 +84,7 @@ public class QueryAction extends BaseRestHandler {
 		return channel -> {
 			try {
 
-				QueryResult response = doRequest(request);
+				JsonResult response = doRequest(request);
 
 				XContentBuilder builder = channel.newBuilder();
 				response.toXContent(builder, request);
@@ -97,7 +97,7 @@ public class QueryAction extends BaseRestHandler {
 		};
 	}
 
-	private QueryResult doRequest(RestRequest request) throws Exception {
+	private JsonResult doRequest(RestRequest request) throws Exception {
 
 		if (request.hasContentOrSourceParam()) {
 
@@ -116,7 +116,7 @@ public class QueryAction extends BaseRestHandler {
 
 			});
 
-			QueryResult result = new QueryResult(json);
+			JsonResult result = new JsonResult(json);
 			return result;
 
 		} else

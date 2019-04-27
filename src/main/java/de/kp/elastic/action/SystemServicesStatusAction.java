@@ -35,7 +35,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
 
-import de.kp.elastic.SystemServicesStatusResult;
+import de.kp.elastic.JsonResult;
 import de.kp.elastic.cdap.CDAPConf;
 import de.kp.elastic.cdap.job.CDAPJob;
 
@@ -48,7 +48,7 @@ public class SystemServicesStatusAction extends BaseRestHandler {
 
 	public SystemServicesStatusAction(Settings settings, RestController controller) {
 		super(settings);
-		controller.registerHandler(POST, "/system/services/status", this);
+		controller.registerHandler(POST, "/_cdap/system/services/status", this);
 		/*
 		 * A privileged access to the application configuration file that contains the
 		 * settings for CDAP connection and authorized user
@@ -82,7 +82,7 @@ public class SystemServicesStatusAction extends BaseRestHandler {
 		return channel -> {
 			try {
 
-				SystemServicesStatusResult response = doRequest(request);
+				JsonResult response = doRequest(request);
 
 				XContentBuilder builder = channel.newBuilder();
 				response.toXContent(builder, request);
@@ -95,7 +95,7 @@ public class SystemServicesStatusAction extends BaseRestHandler {
 		};
 	}
 
-	private SystemServicesStatusResult doRequest(RestRequest request) throws Exception {
+	private JsonResult doRequest(RestRequest request) throws Exception {
 
 		if (request.hasContentOrSourceParam()) {
 
@@ -104,7 +104,7 @@ public class SystemServicesStatusAction extends BaseRestHandler {
 
 			});
 
-			SystemServicesStatusResult result = new SystemServicesStatusResult(json);
+			JsonResult result = new JsonResult(json);
 			return result;
 
 		} else

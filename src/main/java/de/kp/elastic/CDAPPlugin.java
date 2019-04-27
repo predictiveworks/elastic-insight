@@ -47,8 +47,20 @@ public class CDAPPlugin extends Plugin implements ActionPlugin {
         		/** _cdap/apps **/
         		new AppsAction(settings, restController),
         		
-        		/** _cdap/app/* **/
+        		/** 
+        		 * _cdap/app
+        		 */
         		new AppAction(settings, restController),
+        		/**
+        		 * Retrieve a metric report of all runs (up to 100)
+        		 * of a certain application
+        		 * 
+        		 * _cdap/app/report
+        		 */
+        		new AppReportAction(settings, restController),
+        		/**
+        		 * _cdap/app/exists
+        		 */
         		new ExistsAction(settings, restController),
         		/**
         		 * Register or update an externally provided blueprint
@@ -156,7 +168,6 @@ public class CDAPPlugin extends Plugin implements ActionPlugin {
         		 * _cdap/system/service/instances
         		 */
         		new SystemServiceInstancesAction(settings, restController)
-        		
         		
         	);
     }

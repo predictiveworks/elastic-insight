@@ -35,7 +35,7 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
 
 import de.kp.elastic.DatasetsRequest;
-import de.kp.elastic.DatasetsResult;
+import de.kp.elastic.JsonResult;
 import de.kp.elastic.cdap.CDAPConf;
 import de.kp.elastic.cdap.job.CDAPJob;
 
@@ -84,7 +84,7 @@ public class DatasetsAction extends BaseRestHandler {
 		return channel -> {
 			try {
 
-				DatasetsResult response = doRequest(request);
+				JsonResult response = doRequest(request);
 
 				XContentBuilder builder = channel.newBuilder();
 				response.toXContent(builder, request);
@@ -97,7 +97,7 @@ public class DatasetsAction extends BaseRestHandler {
 		};
 	}
 
-	private DatasetsResult doRequest(RestRequest request) throws Exception {
+	private JsonResult doRequest(RestRequest request) throws Exception {
 
 		if (request.hasContentOrSourceParam()) {
 
@@ -114,7 +114,7 @@ public class DatasetsAction extends BaseRestHandler {
 
 			});
 
-			DatasetsResult result = new DatasetsResult(json);
+			JsonResult result = new JsonResult(json);
 			return result;
 
 		} else

@@ -1,6 +1,7 @@
 package de.kp.elastic.cdap.core
 
-import java.util.Properties
+import java.util.{Date, Properties}
+import java.time.Duration
 
 import co.cask.cdap.client._
 import co.cask.cdap.client.config._
@@ -685,7 +686,8 @@ class CDAPContext(props:Properties) {
 	    
 	  })
 	  
-	  plugins.toList.distinct
+	  /* Return result as an ascending list of plugins */
+	  plugins.toList.sortBy(plugin => plugin.name).distinct
 	  
 	}
 	
@@ -748,7 +750,10 @@ class CDAPContext(props:Properties) {
   }
   /**
    * This method returns the run records of a certain program filtered
-   * with respect to start & end time, and limit
+   * with respect to start & end time, and limit.
+   * 
+   * The list of run records is chronologically descending, i.e. the
+   * latest run is the first one in the list
    */
   def getProgramRuns(namespace: String, appName: String, appVersion: String, progName: String, progType: String, 
       progState: String, startTime: Long, endTime: Long, limit: Int): List[CDAPRunRecord] = {
@@ -756,8 +761,11 @@ class CDAPContext(props:Properties) {
     /* Retrieve program identifier */
     val prog = getProgID(namespace, appName, appVersion, progName, progType)
 
+    val begin = if (startTime == -1) 0L else startTime
+    val end = if (endTime == -1) System.currentTimeMillis else endTime
+    
     /* Get program run records */
-    val runs = progClient.getProgramRuns(prog, progState, startTime, endTime, limit)
+    val runs = progClient.getProgramRuns(prog, progState, begin, end, limit)
 
     runs.map(run => {
 
@@ -847,6 +855,152 @@ class CDAPContext(props:Properties) {
   
   /********************************
    * 
+   * REPORT METHODS
+   * 
+   *******************************/
+  
+  /**
+   * This method retrieves aggregated run & metric infos for the (single) program 
+   * assigned to a certain application; the current metrics cover warnings and
+   * errors that occurred during each run
+   */
+  
+  def getAppReport(namespace:String, appName:String, appVersion:String, startTime:Long = 0L, endTime:Long = 0L):CDAPAppReport = {
+    
+    val nsID = NamespaceId.fromIdParts(List(namespace))
+    val appID = getAppID(nsID, appName, appVersion)
+    
+    /* STEP #1: Retrieve all programs that refer to a certain application
+     * and restrict to the first program 
+     */
+    val progs = appClient.listPrograms(appID)
+    if (progs.size() == 1) {
+          
+      val prog = progs.head
+      
+      val progName = prog.getName
+      val progType = prog.getType.getPrettyName
+      
+      val progID = getProgID(appID,progName,progType)
+      /*
+       * STEP #2: Retrieve program status
+       */
+      val progStatus = progClient.getStatus(progID)
+      /*
+       * STEP #3: Retrieve run records
+       */
+      val progState = "ALL"
+      
+      val now = System.currentTimeMillis / 1000
+      
+      val start = if (startTime == 0L) 0L else startTime
+      val end   = if (endTime == 0L) now else endTime
+      
+      val limit = 100
+      
+      val runinfo = progClient.getProgramRuns(progID, progState, start, end, limit)
+      val total = runinfo.size
+      
+      /*
+       * STEP #4: Retrieve basic application metrics for
+       * each application (program run)
+       */
+      val metrics = List("system.app.log.warn", "system.app.log.error")
+      
+      val context = Map("appName" -> appName)
+      val tags = getMetricTags(namespace, context)
+
+      val runs = runinfo.map(run => {
+        /*
+         * This is the start time in seconds
+         */
+        val start = run.getStartTs
+        val stop = run.getStopTs
+
+        val duration = (stop - start)
+        val status = run.getStatus
+
+        val newTags = tags ++ Map("run" -> run.getPid)        
+        val events = metrics.map(metric => {
+          /*
+           * The CDAP backend is requested for each
+           * metric individually
+           */
+          val result = metricsClient.query(newTags, metric)
+          /*
+           * Aggregate metric value from the respective
+           * timeseries
+           */
+          val counts = result.getSeries.map(series => {
+            /*
+             * Aggregate all values from this timeseries
+             */
+            series.getData.map(record => record.getValue).sum
+          
+          }).sum
+        
+          (metric,counts)
+          
+        })
+        
+        CDAPRunMetrics(
+          pid        = run.getPid,
+          status     = status,
+          startTime  = start,
+          duration   = duration,
+          metrics    = events            
+        )
+        
+      }).toList
+      
+      CDAPAppReport(
+        namespace  = namespace,
+        appName    = appName,
+        appVersion = appVersion,
+        appStatus  = progStatus,
+        runs       = total,
+        metrics    = runs
+      )
+
+    } else
+      throw new Exception(s"[ERROR] Only a single program is expected per application. Found: ${progs.size()}")
+    
+  }
+  
+  def getAppLogs(namespace:String, appName:String, appVersion:String):Unit = {
+    
+    val nsID = NamespaceId.fromIdParts(List(namespace))
+    val appID = getAppID(nsID, appName, appVersion)
+    
+    /* STEP #1: Retrieve all programs that refer to a certain application
+     * and restrict to the first program 
+     */
+    val progs = appClient.listPrograms(appID)
+    if (progs.size() == 1) {
+          
+      val prog = progs.head
+      
+      val progName = prog.getName
+      val progType = prog.getType.getPrettyName
+      
+      val progID = getProgID(appID,progName,progType)
+      /*
+       * STEP #2: Retrieve program status
+       */
+      val startTime = 0L
+      val endTime   = System.currentTimeMillis
+      
+      val progLogs = progClient.getProgramLogs(progID, startTime, endTime)
+      println(progLogs)
+      // TODO
+
+    } else
+      throw new Exception(s"[ERROR] Only a single program is expected per application. Found: ${progs.size()}")
+    
+  }
+  
+  /********************************
+   * 
    * PRIVATE METHODS
    * 
    *******************************/
@@ -892,10 +1046,67 @@ object CDAPContext {
     val props = CDAPConf.getProps
 		val ctx = new CDAPContext(props)
     
-    val plugins = ctx.getPlugins("default")
-    val filtered = plugins.filter(plugin => plugin.`type` == "batchsource")
+    val namespace = "default"
     
-    println(filtered.sortBy(plugin => plugin.className))
+    val appName = "EnronPipeline"
+    val appVersion = "-SNAPSHOT"
+    
+	  val progName = "DataStreamsSparkStreaming"
+	  val progType = "Spark"
+	  val progState = "ALL"
+
+	  val startTime:Long = -1
+	  val endTime:Long = -1;
+    
+    val limit = 100
+
+    val runs = ctx.getProgramRuns(namespace, appName, appVersion, progName, progType, 
+      progState, startTime, endTime, limit)
+      
+    runs.foreach(run => {
+      val runID = run.pid  
+      val tags = Map(
+        "namespace" -> "default",
+        "app" -> "EnronPipeline",
+        "run" -> runID
+      )
+      val metric = "system.app.log.warn"
+      println(ctx.queryMetric(tags.asJava,metric))
+      
+    })
+//      
+//    println(runs)
+//    
+//    val status = ctx.getProgStatus(namespace, appName, appVersion, progName, progType)
+//    println(status)
+    
+//    val context = Map(
+//      "appName" -> "EnronPipeline"
+//    )
+    
+//    val metrics = ctx.getMetrics("default",context.asJava).metrics
+   
+    
+//    metrics.foreach(metric => {
+//       println(metric)
+//       println("-------")
+//       try {
+//         println(ctx.queryMetric(tags.asJava,metric))
+//         
+//       } catch {
+//         case t:Throwable => null
+//       } finally {}
+//    })
+   
+    
+    //ctx.getAppReport(namespace, appName, appVersion)
+
+//    
+//    val plugins = ctx.getPlugins("default")
+//    val filtered = plugins.filter(plugin => plugin.`type` == "batchsource")
+//    
+//    println(filtered.sortBy(plugin => plugin.className))
+
     
   }
 }

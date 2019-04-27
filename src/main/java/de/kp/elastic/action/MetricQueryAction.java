@@ -37,7 +37,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
 
-import de.kp.elastic.MetricQueryResult;
+import de.kp.elastic.JsonResult;
 import de.kp.elastic.MetricQueryRequest;
 import de.kp.elastic.cdap.CDAPConf;
 import de.kp.elastic.cdap.job.CDAPJob;
@@ -85,7 +85,7 @@ public class MetricQueryAction extends BaseRestHandler {
 		return channel -> {
 			try {
 
-				MetricQueryResult response = doRequest(request);
+				JsonResult response = doRequest(request);
 
 				XContentBuilder builder = channel.newBuilder();
 				response.toXContent(builder, request);
@@ -98,7 +98,7 @@ public class MetricQueryAction extends BaseRestHandler {
 		};
 	}
 
-	private MetricQueryResult doRequest(RestRequest request) throws Exception {
+	private JsonResult doRequest(RestRequest request) throws Exception {
 
 		if (request.hasContentOrSourceParam()) {
 
@@ -115,7 +115,7 @@ public class MetricQueryAction extends BaseRestHandler {
 
 			});
 
-			MetricQueryResult result = new MetricQueryResult(json);
+			JsonResult result = new JsonResult(json);
 			return result;
 
 		} else

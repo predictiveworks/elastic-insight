@@ -22,9 +22,18 @@ case class CDAPException(
   trace:Option[String] = None
 )
 
-case class CDAPProgram(
-  progName:String,progDesc:String,progType:String  
+case class CDAPAppReport(
+  namespace:String,
+  appName:String,
+  appVersion:String,
+  appStatus:String,
+  runs:Int,
+  metrics:List[CDAPRunMetrics]
 )
+
+//case class CDAPProgram(
+//  progName:String,progDesc:String,progType:String  
+//)
 
 //case class CDAPApplication(
 //  namespace:String,  
@@ -106,6 +115,17 @@ case class CDAPQueryResult(
   schema:List[CDAPColumnDesc],
   /* Row column values */
   rows:List[List[Any]]
+)
+
+case class CDAPRunMetrics(
+  pid:String,
+  /* Status */
+  status:String,
+  /* Start time in seconds */
+  startTime:Long,
+  /* Duration in seconds */
+  duration:Long,
+  metrics:List[(String,Long)]
 )
 
 case class CDAPRunRecord(
